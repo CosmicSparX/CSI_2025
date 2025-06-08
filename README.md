@@ -45,6 +45,6 @@ As this is a personal repository for internship assignments, direct contribution
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/CosmicSparX/CSI_2025/blob/main/LICENSE) file for details.
 
 -----
