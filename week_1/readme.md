@@ -1,4 +1,3 @@
----
 # My Node.js Hello World Application
 
 This repository contains a simple "Hello World" application built with Node.js.
