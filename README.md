@@ -10,10 +10,10 @@ Each assignment will typically reside in its own dedicated folder. Folders are g
 
 ```
 .
-├── Assignment 1/
+├── week_1/
 │   ├── solution.py
 │   └── README.md
-├── Assignment 2/
+├── week_2/
 │   ├── solution.js
 │   └── README.md
 └── ...
