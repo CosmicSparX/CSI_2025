@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>File Management Tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+</head>
+<body>
+    <section class="section">
+        <div class="container" style="text-align: center">
+            <h1 class="title">
+                File Management Tool
+            </h1>
+            <p class="subtitle">
+                Simple File Management tool made using  <strong>Node.js</strong>!
+            </p>
+        </div>
+        <div class="container fixed-grid has-3-cols mt-6 p-2">
+            <div class="grid">
+                <button class="button cell has-background-primary" onClick="switchForm('create')">Create</button>
+                <button class="button cell has-background-info" onclick="switchForm('read')">Read</button>
+                <button class="button cell has-background-danger" onclick="switchForm('delete')">Delete</button>
+            </div>
+        </div>
+        <div class="form-area">
+            <div class="container p-6" style="border: 2px solid var(--bulma-primary); border-radius: 20px; transition: all 0.5s linear;">
+                <div class="field">
+                    <label class="label">File Name</label>
+                    <div class="control">
+                        <input class="input" type="text" placeholder="Enter the File Name">
+                    </div>
+                </div>
+                <div class="field contents" style="transition: all 0.5s linear;overflow-y: hidden;max-height: 400px">
+                    <label class="label">File Contents</label>
+                    <div class="control">
+                    <textarea
+                            class="textarea"
+                            placeholder="Enter the contents of the file"
+                            rows="4"
+                    ></textarea>
+                    </div>
+                </div>
+                <div class="field mt-5">
+                    <div class="control">
+                        <button class="button is-link" style="opacity: 100%; transition: all 0.2s linear;">Create File</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="text/javascript">
+        const submitBtn = document.querySelector('.button.is-link');
+        submitBtn.addEventListener('click', () => {
+            const state = submitBtn.innerHTML.split(" ")[0].toLowerCase();
+            const fileName = fileNameEl.value.trim();
+            const fileContent = fileContentEl.value; // Content might have leading/trailing spaces
+
+            let url = '';
+            let method = '';
+            let body = null;
+            let headers = {};
+
+            switch(state) {
+                case "create":
+                    url = '/create';
+                    method = 'POST';
+                    headers = { 'Content-Type': 'application/json' };
+                    body = JSON.stringify({ fileName, content: fileContent });
+                    break;
+                case "read":
+                    url = `/read?fileName=${encodeURIComponent(fileName)}`; // Use query param for GET
+                    method = 'GET';
+                    break;
+                case "delete":
+                    url = '/delete';
+                    method = 'POST';
+                    headers = { 'Content-Type': 'application/json' };
+                    body = JSON.stringify({ fileName });
+                    break;
+                default:
+                    console.error('Unknown button state.', 'error');
+                    return; 
+            }
+        });
+
+        const switchForm = (state) => {
+            let btnText = '';
+            submitBtn.style.color = 'var(--bulma-link)';
+
+            if (state === 'create'){
+                document.querySelector('.field.contents').style.maxHeight = '400px';
+                document.querySelector('.form-area > .container').style.borderColor = 'var(--bulma-primary)';
+                btnText = 'Create File';
+            } else if (state === 'read'){
+                document.querySelector('.field.contents').style.maxHeight = '0';
+                document.querySelector('.form-area > .container').style.borderColor = 'var(--bulma-info)';
+                btnText = 'Read File';
+            } else if (state === 'delete'){
+                document.querySelector('.field.contents').style.maxHeight = '0';
+                document.querySelector('.form-area > .container').style.borderColor = 'var(--bulma-danger)';
+                btnText = 'Delete File';
+            }
+            setTimeout(() => {
+                submitBtn.innerHTML = btnText;
+                submitBtn.style.color = 'var(--bulma-text-strong)';
+            }, 250);
+        }
+    </script>
+</body>
+</html>
