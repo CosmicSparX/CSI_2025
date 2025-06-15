@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs"; // Using the standard callback-based fs module
 import { URL } from 'url';
-import {FILES_DIR} from "./solution.js";
+import {FILES_DIR} from "./server.js";
 
 
 function sendResponse(res, statusCode, contentType, message) {
