@@ -1,11 +1,16 @@
-const http = require('http');
-const fs = require('fs/promises');
-const path = require('path');
-const url = require('url');
-const api = require("./api.js");
+import http from 'http';
+import fs from 'fs/promises';
+import path from 'path';
+import * as url from 'url';
+
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import {createFile, readFile, deleteFile} from "./api.js";
 
 const PORT = 3000;
-const FILES_DIR = path.join(__dirname, 'managed_dir');
+export const FILES_DIR = path.join(__dirname, 'managed_dir');
 
 function serveHtml(res) {
     const htmlFilePath = path.join(__dirname, 'index.html');
@@ -27,11 +32,13 @@ const server = http.createServer((req, res) => {
     if (req.method === 'GET' && pathname === '/') {
         serveHtml(res);
     } else if (req.method === 'POST' && pathname === '/create') {
-        api.createFile(req, res);
+        // console.log("test")
+        createFile(req, res);
     } else if (req.method === 'GET' && pathname === '/read') {
-        api.readFile(req, res);
+        // console.log('test');
+        readFile(req, res);
     } else if (req.method === 'POST' && pathname === '/delete') {
-        api.deleteFile(req, res);
+        deleteFile(req, res);
     } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');

@@ -28,7 +28,7 @@
                 <div class="field">
                     <label class="label">File Name</label>
                     <div class="control">
-                        <input class="input" type="text" placeholder="Enter the File Name">
+                        <input class="input" id="filename" type="text" placeholder="Enter the File Name">
                     </div>
                 </div>
                 <div class="field contents" style="transition: all 0.5s linear;overflow-y: hidden;max-height: 400px">
@@ -38,6 +38,7 @@
                             class="textarea"
                             placeholder="Enter the contents of the file"
                             rows="4"
+                            id="contents"
                     ></textarea>
                     </div>
                 </div>
@@ -54,35 +55,60 @@
         const submitBtn = document.querySelector('.button.is-link');
         submitBtn.addEventListener('click', () => {
             const state = submitBtn.innerHTML.split(" ")[0].toLowerCase();
-            const fileName = fileNameEl.value.trim();
-            const fileContent = fileContentEl.value; // Content might have leading/trailing spaces
+            const fileName = document.querySelector('#filename').value.trim();
+            const fileContent = document.querySelector('#contents').value;
 
             let url = '';
             let method = '';
             let body = null;
             let headers = {};
 
+            console.log(state);
             switch(state) {
                 case "create":
                     url = '/create';
                     method = 'POST';
                     headers = { 'Content-Type': 'application/json' };
-                    body = JSON.stringify({ fileName, content: fileContent });
+                    body = JSON.stringify({ fileName: fileName, content: fileContent });
                     break;
                 case "read":
-                    url = `/read?fileName=${encodeURIComponent(fileName)}`; // Use query param for GET
+                    url = `/read?fileName=${encodeURIComponent(fileName)}`;
                     method = 'GET';
                     break;
                 case "delete":
                     url = '/delete';
                     method = 'POST';
                     headers = { 'Content-Type': 'application/json' };
-                    body = JSON.stringify({ fileName });
+                    body = JSON.stringify({ fileName: fileName });
                     break;
                 default:
                     console.error('Unknown button state.', 'error');
-                    return; 
+                    return;
             }
+
+            setTimeout(async () => {
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: headers,
+                        body: body
+                    });
+
+                    const result = await response.text();
+
+                    if (response.ok) {
+                        alert(`${state.charAt(0).toUpperCase() + state.slice(1)} successful! ${result}`);
+                        if (state === 'read') {
+                            alert(`Contents of the file ${fileName} are:\n${JSON.stringify(result, null, 2)}`);
+                        }
+                    } else {
+                        alert(`${state.charAt(0).toUpperCase() + state.slice(1)} failed: ${result || response.statusText}`);
+                    }
+                } catch (error) {
+                    alert(`Network error: ${error.message} ` + 'error');
+                    console.error('Fetch error:', error);
+                }
+            }, 100);
         });
 
         const switchForm = (state) => {
