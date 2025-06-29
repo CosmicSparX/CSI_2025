@@ -13,6 +13,8 @@ process.env.JWT_SECRET;
 // Middlewares
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(express.json())
+
 function generateToken(username) {
   return jwt.sign(username, process.env.JWT_SECRET, { expiresIn: '1800s' });
 }
@@ -26,8 +28,8 @@ function authenticateToken(req, res, next) {
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    console.log(err);
-    if (err) {
+      if (err) {
+        console.log(err);
         return res.sendStatus(403);
     }
     req.user = user;
@@ -38,6 +40,9 @@ function authenticateToken(req, res, next) {
 app.use((req,res,next) =>{
     req.time = new Date(Date.now()).toString();
     console.log(req.method,req.hostname, req.path, req.time);
+    if (req.body) {
+        console.log(req.body);
+    }
     next();
 });
 
@@ -48,12 +53,16 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
-    const token = generateToken({ username: req.body.username });
-    res.json(token);
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).json({ message: 'Username is required for login.' });
+    }
+    const token = generateToken({ username: username });
+    res.json({ token: token });
 });
 
 app.get('/api/data', authenticateToken, (req, res) => {
-    res.json({ msg: "Pranay says Hi!" })
+    res.json({ msg: `Pranay says Hi to ${req.user.username}!` })
 });
 
 
