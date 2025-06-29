@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSI 2025 Week 4 Assignment</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+</head>
+<body>
+    <section class="section">
+        <div class="container is-max-desktop" style="text-align: center;">
+            <h1 class="is-size-1 title">CSI Week 4 Assignment</h1>
+            <h2 class="subtitle">Express server with basic <strong>Routing</strong> and <strong>Middlewares</strong></h2>
+            <textarea id="json" class="textarea mt-5" 
+            placeholder='{
+    "username": "test"
+}' rows="10">
+{
+    "username": "test"
+}</textarea>
+            <div class="container fixed-grid has-2-cols mt-3 p-2">
+                <div class="grid">
+                    <button class="button cell has-background-primary" id="login">Login</button>
+                    <button class="button cell has-background-info" id="get-data">Get Data</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        const loginButton = document.getElementById("login");
+        const dataButton = document.getElementById("get-data");
+        const textArea = document.getElementById("json")
+
+        loginButton.addEventListener('click', () => {
+            const jsonString = textArea.value.trim();
+            let jsonData = JSON.parse(jsonString);
+            console.log("Login")
+            console.log(jsonData)
+        });
+        
+        dataButton.addEventListener('click', () => {
+            console.log("Data")
+        });
+    </script>
+</body>
+</html>
