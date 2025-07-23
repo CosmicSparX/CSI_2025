@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSI 2025 Week 4 Assignment</title>
+    <title>CSI 2025 Week 5 Assignment - CRUD App</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <style>
         .message-box {
@@ -28,19 +28,47 @@
 <body>
     <section class="section">
         <div class="container is-max-desktop" style="text-align: center;">
-            <h1 class="is-size-1 title">CSI Week 5 Assignment</h1>
-            <h2 class="subtitle">Express server with basic <strong>Routing</strong> and <strong>Middlewares</strong></h2>
-            <textarea id="jsonInput" class="textarea mt-5"
-                placeholder='Enter JSON, e.g., {"username": "testuser"}' rows="3">
-{
-    "username": "testuser"
-}</textarea>
-            <div class="container fixed-grid has-2-cols mt-3 p-2">
-                <div class="grid">
-                    <button class="button cell is-primary" id="loginButton">Login</button>
-                    <button class="button cell is-info" id="getDataButton">Get Data (Protected)</button>
+            <h1 class="is-size-1 title">CSI Week 5 Assignment - CRUD App</h1>
+            <h2 class="subtitle">MongoDB CRUD operations with Express and Mongoose</h2>
+
+            <div class="field">
+                <label class="label">Item Name</label>
+                <div class="control">
+                    <input class="input" type="text" id="itemName" placeholder="e.g., Laptop">
                 </div>
             </div>
+
+            <div class="field">
+                <label class="label">Item Description</label>
+                <div class="control">
+                    <textarea class="textarea" id="itemDescription" placeholder="e.g., High performance laptop"></textarea>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Item Quantity</label>
+                <div class="control">
+                    <input class="input" type="number" id="itemQuantity" value="0">
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Item ID (for Read, Update, Delete)</label>
+                <div class="control">
+                    <input class="input" type="text" id="itemId" placeholder="e.g., 60d5ecf0f3c6c3001c8c4f8e">
+                </div>
+            </div>
+
+            <div class="container fixed-grid has-4-cols mt-3 p-2">
+                <div class="grid">
+                    <button class="button cell is-primary" id="createButton">Create Item</button>
+                    <button class="button cell is-info" id="readButton">Read All Items</button>
+                    <button class="button cell is-link" id="readOneButton">Read One Item</button>
+                    <button class="button cell is-warning" id="updateButton">Update Item</button>
+                    <button class="button cell is-danger" id="deleteButton">Delete Item</button>
+                </div>
+            </div>
+
             <div id="messageBox" class="message-box">
                 Messages will appear here.
             </div>
@@ -48,12 +76,16 @@
     </section>
 
     <script>
-        const loginButton = document.getElementById("loginButton");
-        const getDataButton = document.getElementById("getDataButton");
-        const jsonInput = document.getElementById("jsonInput");
+        const itemNameInput = document.getElementById("itemName");
+        const itemDescriptionInput = document.getElementById("itemDescription");
+        const itemQuantityInput = document.getElementById("itemQuantity");
+        const itemIdInput = document.getElementById("itemId");
+        const createButton = document.getElementById("createButton");
+        const readButton = document.getElementById("readButton");
+        const readOneButton = document.getElementById("readOneButton");
+        const updateButton = document.getElementById("updateButton");
+        const deleteButton = document.getElementById("deleteButton");
         const messageBox = document.getElementById("messageBox");
-
-        let authToken = null;
 
         function displayMessage(text, isError = false) {
             messageBox.textContent = text;
@@ -65,61 +97,139 @@
             }
         }
 
-        loginButton.addEventListener('click', async () => {
-            const jsonString = jsonInput.value.trim();
-            let jsonData;
-            try {
-                jsonData = JSON.parse(jsonString);
-            } catch (error) {
-                displayMessage(`Error: Invalid JSON in textarea: ${error.message}`, true);
+        createButton.addEventListener('click', async () => {
+            const name = itemNameInput.value.trim();
+            const description = itemDescriptionInput.value.trim();
+            const quantity = parseInt(itemQuantityInput.value);
+
+            if (!name) {
+                displayMessage("Error: Item Name is required for creation.", true);
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:3000/api/login', {
+                const response = await fetch('http://localhost:3000/api/items', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(jsonData)
+                    body: JSON.stringify({ name, description, quantity })
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    authToken = result.token;
-                    displayMessage(`Login successful! Token received:\n${authToken}\nReady to get protected data.`, false);
+                    displayMessage(`Item created successfully:\n${JSON.stringify(result, null, 2)}`);
                 } else {
                     const errorData = await response.json();
-                    displayMessage(`Login failed: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
+                    displayMessage(`Failed to create item: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
                 }
             } catch (error) {
-                displayMessage(`Network error during login: ${error.message}.`, true);
+                displayMessage(`Network error during item creation: ${error.message}.`, true);
             }
         });
 
-        getDataButton.addEventListener('click', async () => {
-            if (!authToken) {
-                displayMessage("Error: No token found. Please log in first.", true);
+        readButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/items');
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayMessage(`All items:\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    const errorData = await response.json();
+                    displayMessage(`Failed to read items: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
+                }
+            } catch (error) {
+                displayMessage(`Network error during reading items: ${error.message}.`, true);
+            }
+        });
+
+        readOneButton.addEventListener('click', async () => {
+            const id = itemIdInput.value.trim();
+            if (!id) {
+                displayMessage("Error: Item ID is required to read a single item.", true);
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:3000/api/data', {
-                    method: 'GET',
+                const response = await fetch(`http://localhost:3000/api/items/${id}`);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayMessage(`Item found:\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    const errorData = await response.json();
+                    displayMessage(`Failed to read item: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
+                }
+            } catch (error) {
+                displayMessage(`Network error during reading item: ${error.message}.`, true);
+            }
+        });
+
+        updateButton.addEventListener('click', async () => {
+            const id = itemIdInput.value.trim();
+            const name = itemNameInput.value.trim();
+            const description = itemDescriptionInput.value.trim();
+            const quantity = parseInt(itemQuantityInput.value);
+
+            if (!id) {
+                displayMessage("Error: Item ID is required for update.", true);
+                return;
+            }
+
+            const updateData = {};
+            if (name) updateData.name = name;
+            if (description) updateData.description = description;
+            if (!isNaN(quantity)) updateData.quantity = quantity;
+
+            if (Object.keys(updateData).length === 0) {
+                displayMessage("Error: No update data provided. Please fill at least one field (Name, Description, or Quantity) to update.", true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/items/${id}`, {
+                    method: 'PUT',
                     headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    displayMessage(`Protected Data received:\n${JSON.stringify(result, null, 2)}`, false);
+                    displayMessage(`Item updated successfully:\n${JSON.stringify(result, null, 2)}`);
                 } else {
                     const errorData = await response.json();
-                    displayMessage(`Failed to get data: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
+                    displayMessage(`Failed to update item: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
+                }
+            }
+            catch (error) {
+                displayMessage(`Network error during item update: ${error.message}.`, true);
+            }
+        });
+
+        deleteButton.addEventListener('click', async () => {
+            const id = itemIdInput.value.trim();
+            if (!id) {
+                displayMessage("Error: Item ID is required for deletion.", true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/items/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayMessage(`Item deleted successfully:\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    const errorData = await response.json();
+                    displayMessage(`Failed to delete item: ${response.status} - ${response.statusText}\nDetails: ${errorData.message}`, true);
                 }
             } catch (error) {
-                displayMessage(`Network error during data fetch: ${error.message}.`, true);
+                displayMessage(`Network error during item deletion: ${error.message}.`, true);
             }
         });
     </script>

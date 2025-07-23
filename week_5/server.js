@@ -1,76 +1,78 @@
-const jwt = require('jsonwebtoken');
-const path = require('path')
+require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
+const path = require('path');
+
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-
-const dotenv = require('dotenv');
-
-dotenv.config();
-process.env.JWT_SECRET;
-
-// Middlewares
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(express.json())
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection error:', err));
 
-function generateToken(username) {
-  return jwt.sign(username, process.env.JWT_SECRET, { expiresIn: '1800s' });
-}
+const itemSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    description: { type: String },
+    quantity: { type: Number, default: 0 }
+});
 
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
+const Item = mongoose.model('Item', itemSchema);
 
-  if (token == null) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) {
-        console.log(err);
-        return res.sendStatus(403);
+app.post('/api/items', async (req, res) => {
+    try {
+        const newItem = new Item(req.body);
+        await newItem.save();
+        res.status(201).json(newItem);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
     }
-    req.user = user;
-    next();
-  })
-}
+});
 
-app.use((req,res,next) =>{
-    req.time = new Date(Date.now()).toString();
-    console.log(req.method,req.hostname, req.path, req.time);
-    if (req.body) {
-        console.log(req.body);
+app.get('/api/items', async (req, res) => {
+    try {
+        const items = await Item.find();
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-    next();
 });
 
-
-// Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.post('/api/login', (req, res) => {
-    const { username } = req.body;
-    if (!username) {
-        return res.status(400).json({ message: 'Username is required for login.' });
+app.get('/api/items/:id', async (req, res) => {
+    try {
+        const item = await Item.findById(req.params.id);
+        if (!item) return res.status(404).json({ message: 'Item not found' });
+        res.json(item);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-    const token = generateToken({ username: username });
-    res.json({ token: token });
 });
 
-app.get('/api/data', authenticateToken, (req, res) => {
-    res.json({ msg: `Pranay says Hi to ${req.user.username}!` })
+app.put('/api/items/:id', async (req, res) => {
+    try {
+        const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        if (!item) return res.status(404).json({ message: 'Item not found' });
+        res.json(item);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
 });
 
-
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-    console.log(`Routes:`);
-    console.log(`  - http://localhost:${port}/`);
-    console.log(`  - http://localhost:${port}/api/login`);
-    console.log(`  - http://localhost:${port}/api/data`);
+app.delete('/api/items/:id', async (req, res) => {
+    try {
+        const item = await Item.findByIdAndDelete(req.params.id);
+        if (!item) return res.status(404).json({ message: 'Item not found' });
+        res.json({ message: 'Item deleted' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
